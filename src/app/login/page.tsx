@@ -8,8 +8,8 @@ import { setAuthSession, getRedirectPath } from "@/lib/auth";
 import { Loader2, Mail, Lock, ChevronRight } from "lucide-react";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(process.env.NEXT_PUBLIC_DEMO_EMAIL || "");
+  const [password, setPassword] = useState(process.env.NEXT_PUBLIC_DEMO_PASSWORD || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();

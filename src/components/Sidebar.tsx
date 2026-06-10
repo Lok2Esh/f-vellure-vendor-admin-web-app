@@ -9,7 +9,10 @@ import {
   UserCircle, 
   Image as ImageIcon, 
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Grid,
+  Tag,
+  Package
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { clearAuthSession, UserRole } from "@/lib/auth";
@@ -32,6 +35,9 @@ export default function Sidebar({ role, userName }: SidebarProps) {
     { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
     { name: "Verification Queue", href: "/admin/queue", icon: ClipboardList },
     { name: "All Vendors", href: "/admin/vendors", icon: Users },
+    { name: "Categories", href: "/admin/categories", icon: Grid },
+    { name: "Offers", href: "/admin/offers", icon: Tag },
+    { name: "Packages", href: "/admin/packages", icon: Package },
   ];
 
   const vendorLinks = [

@@ -32,7 +32,6 @@ export default function AdminCategories() {
     description: "",
     icon: "calendar",
     imageUrl: "",
-    vendorCount: 0,
     sortOrder: 0,
   });
 
@@ -66,7 +65,7 @@ export default function AdminCategories() {
 
   const openCreateModal = () => {
     setEditingId(null);
-    setFormData({ name: "", slug: "", description: "", icon: "calendar", imageUrl: "", vendorCount: 0, sortOrder: 0 });
+    setFormData({ name: "", slug: "", description: "", icon: "calendar", imageUrl: "", sortOrder: 0 });
     setIsModalOpen(true);
   };
 
@@ -78,7 +77,6 @@ export default function AdminCategories() {
       description: category.description || "",
       icon: category.icon,
       imageUrl: category.imageUrl || "",
-      vendorCount: category.vendorCount,
       sortOrder: category.sortOrder,
     });
     setIsModalOpen(true);
@@ -254,7 +252,7 @@ export default function AdminCategories() {
                   <input type="url" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} placeholder="https://..." className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-burgundy text-sm" />
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Icon</label>
                     <input type="text" value={formData.icon} onChange={e => setFormData({...formData, icon: e.target.value})} className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-burgundy text-sm" />
@@ -262,10 +260,6 @@ export default function AdminCategories() {
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Sort Order</label>
                     <input type="number" value={formData.sortOrder} onChange={e => setFormData({...formData, sortOrder: parseInt(e.target.value) || 0})} className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-burgundy text-sm" />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Vendor Count</label>
-                    <input type="number" value={formData.vendorCount} onChange={e => setFormData({...formData, vendorCount: parseInt(e.target.value) || 0})} className="w-full p-3 bg-gray-50 rounded-xl border-none focus:ring-2 focus:ring-burgundy text-sm" />
                   </div>
                 </div>
 

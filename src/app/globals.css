@@ -27,8 +27,13 @@
 }
 
 @layer base {
-  * {
+  *,
+  *::before,
+  *::after {
     border-color: var(--border);
+    outline: none !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
   }
   body {
     background-color: var(--background);
@@ -37,6 +42,17 @@
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif font-semibold;
+  }
+  input, textarea, select, button, [tabindex] {
+    outline: none !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
+  }
+  input:focus, textarea:focus, select:focus, button:focus, [tabindex]:focus {
+    outline: none !important;
+    outline-width: 0 !important;
+    outline-style: none !important;
+    box-shadow: none !important;
   }
 }
 

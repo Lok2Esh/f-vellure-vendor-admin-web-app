@@ -21,11 +21,11 @@ export function VellureButton({
     <button
       disabled={isLoading || props.disabled}
       className={cn(
-        "flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none",
-        variant === 'primary' && "bg-burgundy text-white hover:bg-opacity-95 shadow-lg shadow-burgundy/10 hover:shadow-xl hover:shadow-burgundy/20",
-        variant === 'secondary' && "bg-gold text-white hover:bg-opacity-95 shadow-md shadow-gold/10",
-        variant === 'outline' && "border-2 border-burgundy/20 text-burgundy hover:bg-burgundy/5 bg-transparent",
-        variant === 'ghost' && "text-gray-500 hover:bg-gray-50 bg-transparent",
+        "flex items-center justify-center gap-2 px-6 py-3 rounded-xl border font-bold transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none",
+        variant === 'primary' && "border-burgundy bg-burgundy text-white hover:border-[#5f0d2e] hover:bg-[#5f0d2e] shadow-lg shadow-burgundy/15 hover:shadow-xl hover:shadow-burgundy/20",
+        variant === 'secondary' && "border-[#b98f48] bg-gold text-[#30191f] hover:border-burgundy hover:bg-[#e2bf7e] shadow-md shadow-gold/15",
+        variant === 'outline' && "border-burgundy/40 text-burgundy hover:border-burgundy hover:bg-burgundy hover:text-white bg-white/70",
+        variant === 'ghost' && "border-transparent text-gray-700 hover:border-gray-200 hover:bg-white bg-transparent",
         className
       )}
       {...props}

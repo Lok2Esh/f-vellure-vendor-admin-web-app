@@ -123,7 +123,7 @@ export default function RegisterPage() {
                     type="button"
                     onClick={() => setFormData({ ...formData, role: 'VENDOR' })}
                     className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all text-xs font-bold ${
-                      formData.role === 'VENDOR' ? 'bg-burgundy text-white border-burgundy' : 'bg-gray-50 text-gray-400 border-gray-100'
+                      formData.role === 'VENDOR' ? 'bg-burgundy text-white border-burgundy shadow-sm shadow-burgundy/15' : 'bg-white text-gray-700 border-gray-300 hover:border-burgundy/50 hover:bg-champagne/60 hover:text-burgundy'
                     }`}
                   >
                     <Briefcase className="w-4 h-4" />
@@ -133,7 +133,7 @@ export default function RegisterPage() {
                     type="button"
                     onClick={() => setFormData({ ...formData, role: 'USER' })}
                     className={`flex items-center justify-center gap-2 py-3 rounded-xl border transition-all text-xs font-bold ${
-                      formData.role === 'USER' ? 'bg-burgundy text-white border-burgundy' : 'bg-gray-50 text-gray-400 border-gray-100'
+                      formData.role === 'USER' ? 'bg-burgundy text-white border-burgundy shadow-sm shadow-burgundy/15' : 'bg-white text-gray-700 border-gray-300 hover:border-burgundy/50 hover:bg-champagne/60 hover:text-burgundy'
                     }`}
                   >
                     <User className="w-4 h-4" />
@@ -145,14 +145,14 @@ export default function RegisterPage() {
 
             <button
               type="submit" disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-burgundy text-white py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-burgundy/20 hover:-translate-y-0.5 transition-all mt-4"
+              className="w-full flex items-center justify-center gap-2 border border-burgundy bg-burgundy text-white py-4 rounded-xl font-bold shadow-md shadow-burgundy/15 hover:border-[#5f0d2e] hover:bg-[#5f0d2e] hover:shadow-lg hover:shadow-burgundy/25 hover:-translate-y-0.5 transition-all mt-4 disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-none disabled:pointer-events-none"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Create Account <ChevronRight className="w-5 h-5" /></>}
             </button>
 
             <div className="text-center pt-2">
               <span className="text-sm text-gray-400">Already a partner? </span>
-              <Link href="/login" className="text-sm font-bold text-gold hover:text-burgundy transition-colors">
+              <Link href="/login" className="rounded-sm text-sm font-bold text-burgundy underline decoration-gold/70 underline-offset-4 transition-colors hover:text-[#5f0d2e] hover:decoration-burgundy">
                 Sign In
               </Link>
             </div>

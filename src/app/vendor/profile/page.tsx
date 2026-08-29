@@ -189,7 +189,7 @@ export default function VendorProfile() {
 
             <button
               type="submit" disabled={saving}
-              className="w-full flex items-center justify-center gap-2 bg-burgundy text-white py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-burgundy/20 hover:-translate-y-0.5 transition-all"
+              className="w-full flex items-center justify-center gap-2 border border-burgundy bg-burgundy text-white py-4 rounded-xl font-bold shadow-md shadow-burgundy/15 hover:border-[#5f0d2e] hover:bg-[#5f0d2e] hover:shadow-lg hover:shadow-burgundy/25 hover:-translate-y-0.5 transition-all disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-none disabled:pointer-events-none"
             >
               {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Brand Details</>}
             </button>
@@ -218,7 +218,7 @@ export default function VendorProfile() {
               <p className="text-xs text-gray-500 leading-relaxed font-medium">
                 Need help adjusting your category? Our support team can assist with high-tier classification.
               </p>
-              <button className="text-xs font-bold text-burgundy mt-4 hover:underline">
+              <button className="mt-5 inline-flex items-center rounded-lg border border-burgundy/25 bg-white px-3 py-2 text-xs font-bold text-burgundy shadow-sm transition-all hover:border-burgundy hover:bg-burgundy hover:text-white">
                 Contact Support
               </button>
             </div>

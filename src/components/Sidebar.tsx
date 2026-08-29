@@ -86,14 +86,14 @@ export default function Sidebar({ role, userName }: SidebarProps) {
           <p className="text-sm font-medium text-gray-900 truncate">{userName}</p>
           <span className={cn(
             "text-[10px] px-2 py-0.5 rounded-full inline-block mt-1 font-bold",
-            role === "ADMIN" ? "bg-burgundy text-white" : "bg-gold text-white"
+            role === "ADMIN" ? "bg-burgundy text-white" : "border border-[#b98f48] bg-gold text-[#30191f]"
           )}>
             {role}
           </span>
         </div>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition-all"
+          className="w-full flex items-center gap-3 rounded-lg border border-transparent px-4 py-3 text-sm font-semibold text-red-700 transition-all hover:border-red-200 hover:bg-red-50 active:bg-red-100"
         >
           <LogOut className="w-5 h-5" />
           Sign Out

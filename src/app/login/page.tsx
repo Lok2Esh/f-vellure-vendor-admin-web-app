@@ -113,7 +113,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 bg-burgundy text-white py-4 rounded-xl font-bold hover:shadow-lg hover:shadow-burgundy/20 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-70 disabled:pointer-events-none"
+              className="w-full flex items-center justify-center gap-2 border border-burgundy bg-burgundy text-white py-4 rounded-xl font-bold shadow-md shadow-burgundy/15 hover:border-[#5f0d2e] hover:bg-[#5f0d2e] hover:shadow-lg hover:shadow-burgundy/25 hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-none disabled:pointer-events-none"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -127,7 +127,7 @@ export default function LoginPage() {
 
             <div className="text-center pt-2">
               <span className="text-sm text-gray-400">New to Vellure? </span>
-              <Link href="/register" className="text-sm font-bold text-gold hover:text-burgundy transition-colors">
+              <Link href="/register" className="rounded-sm text-sm font-bold text-burgundy underline decoration-gold/70 underline-offset-4 transition-colors hover:text-[#5f0d2e] hover:decoration-burgundy">
                 Apply for Partnership
               </Link>
             </div>

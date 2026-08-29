@@ -109,7 +109,7 @@ export default function AdminDashboard() {
             <p className="text-white/70 text-sm leading-relaxed mb-6 italic">
               "We maintain the highest standards for our partners. Please audit each vendor's portfolio thoroughly before manual approval."
             </p>
-            <button className="w-full bg-gold text-white py-3 rounded-xl font-bold hover:shadow-lg transition-all text-xs tracking-widest uppercase">
+            <button className="w-full border border-[#b98f48] bg-gold text-[#30191f] py-3 rounded-xl font-bold hover:border-white/60 hover:bg-[#e2bf7e] hover:shadow-lg transition-all text-xs tracking-widest uppercase">
               Go to Queue
             </button>
           </div>

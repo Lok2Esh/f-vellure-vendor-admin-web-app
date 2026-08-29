@@ -128,7 +128,7 @@ export default function AdminQueue() {
                     <td className="px-8 py-6">
                       <div className="flex items-center justify-center gap-3">
                         <button 
-                          className="p-2.5 rounded-xl bg-champagne hover:bg-gold hover:text-white text-gold transition-all shadow-sm border border-gold/10"
+                          className="p-2.5 rounded-xl bg-white text-burgundy hover:bg-gold hover:text-[#30191f] transition-all shadow-sm border border-gold/40"
                           title="View Portfolio"
                         >
                           <Eye className="w-5 h-5" />
@@ -136,7 +136,7 @@ export default function AdminQueue() {
                         <button 
                           disabled={!!actionLoading}
                           onClick={() => handleAction(vendor.id, "approve")}
-                          className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-green-500/20 active:translate-y-0.5 transition-all disabled:opacity-50"
+                          className="flex items-center gap-2 rounded-xl border border-green-700 bg-green-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-green-800 hover:shadow-lg hover:shadow-green-700/20 active:translate-y-0.5 disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-none"
                         >
                           {actionLoading === vendor.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                           APPROVE
@@ -144,7 +144,7 @@ export default function AdminQueue() {
                         <button 
                           disabled={!!actionLoading}
                           onClick={() => handleAction(vendor.id, "reject")}
-                          className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-red-500/20 active:translate-y-0.5 transition-all disabled:opacity-50"
+                          className="flex items-center gap-2 rounded-xl border border-red-700 bg-red-700 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-red-800 hover:shadow-lg hover:shadow-red-700/20 active:translate-y-0.5 disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-none"
                         >
                           <XCircle className="w-4 h-4" />
                           REJECT

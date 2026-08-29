@@ -18,14 +18,20 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Define strictly public paths
-  const isPublicPath = pathname === '/login' || pathname === '/register';
+  const isLandingPage = pathname === '/';
+  const isPublicPath = isLandingPage || pathname === '/login' || pathname === '/register';
 
   // 1. Unauthenticated users:
-  // Redirect to login if they try to access ANY protected route (including base url '/')
+  // Redirect to login when an unauthenticated user requests a protected route.
   if (!token) {
     if (!isPublicPath) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
+    return NextResponse.next();
+  }
+
+  // The marketing homepage remains available to signed-in and signed-out visitors.
+  if (isLandingPage) {
     return NextResponse.next();
   }
 

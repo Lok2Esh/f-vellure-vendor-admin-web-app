@@ -18,6 +18,7 @@ import {
   Loader2,
   Tag,
   HeartHandshake,
+  Search,
 } from "lucide-react";
 
 interface Collaborator {
@@ -78,6 +79,7 @@ export default function VendorPortfolio() {
   // Collabs Form State
   const [collabMode, setCollabMode] = useState<"APP" | "MANUAL">("APP");
   const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [partnerSearchQuery, setPartnerSearchQuery] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualCategory, setManualCategory] = useState("DECOR");
   const [manualRole, setManualRole] = useState("");
@@ -506,28 +508,58 @@ export default function VendorPortfolio() {
                   )}
 
                   {collabMode === "APP" ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {REGISTERED_PARTNERS_LIST.map((pv) => {
-                        const isAdded = collaborators.some((c) => c.vendorId === pv.id);
-                        return (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          value={partnerSearchQuery}
+                          onChange={(e) => setPartnerSearchQuery(e.target.value)}
+                          placeholder="Search partners by name, category or city..."
+                          className="w-full pl-8 pr-8 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-xs outline-none focus:border-burgundy"
+                        />
+                        {partnerSearchQuery && (
                           <button
-                            key={pv.id}
                             type="button"
-                            onClick={() => handleAddAppVendor(pv)}
-                            className={`p-2.5 rounded-xl border text-left flex items-center justify-between text-xs transition-all ${
-                              isAdded ? "bg-green-50 border-green-200 text-green-800" : "bg-gray-50 border-gray-100 hover:border-burgundy"
-                            }`}
+                            onClick={() => setPartnerSearchQuery("")}
+                            className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
                           >
-                            <div className="truncate">
-                              <p className="font-bold truncate">{pv.name}</p>
-                              <p className="text-[10px] text-gray-400">{pv.role}</p>
-                            </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border shrink-0">
-                              {isAdded ? "Added" : "+ Add"}
-                            </span>
+                            <X className="w-3.5 h-3.5" />
                           </button>
-                        );
-                      })}
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                        {REGISTERED_PARTNERS_LIST.filter((pv) => {
+                          if (!partnerSearchQuery.trim()) return true;
+                          const q = partnerSearchQuery.toLowerCase().trim();
+                          return (
+                            pv.name.toLowerCase().includes(q) ||
+                            pv.role.toLowerCase().includes(q) ||
+                            pv.category.toLowerCase().includes(q)
+                          );
+                        }).map((pv) => {
+                          const isAdded = collaborators.some((c) => c.vendorId === pv.id);
+                          return (
+                            <button
+                              key={pv.id}
+                              type="button"
+                              onClick={() => handleAddAppVendor(pv)}
+                              className={`p-2.5 rounded-xl border text-left flex items-center justify-between text-xs transition-all ${
+                                isAdded ? "bg-green-50 border-green-200 text-green-800" : "bg-gray-50 border-gray-100 hover:border-burgundy"
+                              }`}
+                            >
+                              <div className="truncate">
+                                <p className="font-bold truncate">{pv.name}</p>
+                                <p className="text-[10px] text-gray-400">{pv.role}</p>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border shrink-0">
+                                {isAdded ? "Added" : "+ Add"}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   ) : (
                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">

@@ -70,6 +70,7 @@ export default function Sidebar({ role, userName }: SidebarProps) {
     { name: "Verification Queue", href: "/admin/queue", icon: ShieldCheck, badge: "3 PENDING" },
     { name: "All Partners", href: "/admin/vendors", icon: Users },
     { name: "Global Inquiries", href: "/admin/inquiries", icon: MessageSquareText },
+    { name: "Categories Master", href: "/admin/categories", icon: Layers },
   ];
 
   const vendorLinks = [

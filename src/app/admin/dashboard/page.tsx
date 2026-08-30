@@ -1,117 +1,193 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import DashboardLayout from "@/components/DashboardLayout";
-import api from "@/lib/api";
-import { Users, ClipboardList, Wallet, ArrowUpRight, Loader2 } from "lucide-react";
-import { formatPrice } from "@/lib/utils";
-
-interface AdminStats {
-  totalVendors: number;
-  pendingVendors: number;
-  verifiedVendors: number;
-  totalBudgets: number;
-}
+import { getAllVendors, getAllInquiries } from "@/lib/vendorStore";
+import { VendorAccount, InquiryItem } from "@/lib/mockData";
+import { 
+  Users, 
+  ClipboardList, 
+  ShieldCheck, 
+  IndianRupee, 
+  TrendingUp, 
+  Sparkles, 
+  Store, 
+  ArrowUpRight, 
+  MessageSquareText,
+  ChevronRight,
+  Award
+} from "lucide-react";
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [vendors, setVendors] = useState<VendorAccount[]>([]);
+  const [inquiries, setInquiries] = useState<InquiryItem[]>([]);
 
   useEffect(() => {
-    async function fetchStats() {
-      try {
-        const response = await api.get("/admin/stats");
-        setStats(response.data);
-      } catch (err) {
-        console.error("Failed to fetch admin stats", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchStats();
+    setVendors(getAllVendors());
+    setInquiries(getAllInquiries());
   }, []);
 
+  const totalGMV = inquiries.reduce((acc, i) => acc + (i.budget || 0), 0);
+  const pendingVendors = vendors.filter((v) => v.status === "PENDING");
+  const verifiedVendors = vendors.filter((v) => v.status === "VERIFIED");
+
   const statsCards = [
-    { 
-      label: "Total Vendors", 
-      value: stats?.totalVendors || 0, 
-      icon: Users, 
-      color: "text-blue-600", 
-      bg: "bg-blue-50" 
+    {
+      label: "Platform GMV Pipeline",
+      value: `₹${(totalGMV / 10000000).toFixed(2)} Cr`,
+      sub: "+32% growth QoQ",
+      icon: IndianRupee,
+      color: "text-[#641E3D]",
+      bg: "bg-[#FAF5EC]",
     },
-    { 
-      label: "Pending Verifications", 
-      value: stats?.pendingVendors || 0, 
-      icon: ClipboardList, 
-      color: "text-burgundy", 
-      bg: "bg-burgundy/5" 
+    {
+      label: "Pending Verification",
+      value: pendingVendors.length,
+      sub: "Requires audit",
+      icon: ClipboardList,
+      color: "text-[#8A6A23]",
+      bg: "bg-[#FAF1E3]",
+      href: "/admin/queue",
     },
-    { 
-      label: "Verified Partners", 
-      value: stats?.verifiedVendors || 0, 
-      icon: ArrowUpRight, 
-      color: "text-green-600", 
-      bg: "bg-green-50" 
+    {
+      label: "Verified Partner Network",
+      value: verifiedVendors.length,
+      sub: "Active across 8 cities",
+      icon: ShieldCheck,
+      color: "text-[#287857]",
+      bg: "bg-[#EBF8F2]",
+      href: "/admin/vendors",
     },
-    { 
-      label: "AI Budgets Generated", 
-      value: stats?.totalBudgets || 0, 
-      icon: Wallet, 
-      color: "text-gold", 
-      bg: "bg-gold/5" 
+    {
+      label: "Total Customer Inquiries",
+      value: inquiries.length,
+      sub: "82% response rate",
+      icon: MessageSquareText,
+      color: "text-[#641E3D]",
+      bg: "bg-[#FAF5EC]",
+      href: "/admin/inquiries",
     },
   ];
 
   return (
     <DashboardLayout allowedRoles={["ADMIN"]}>
-      <div className="space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-4xl font-serif font-bold text-gray-900">Admin Overview</h1>
-          <p className="text-gray-500 mt-2 font-medium">Monitoring the global Vellure ecosystem</p>
+      <div className="space-y-6">
+        {/* ──── TOP HEADER ──── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#EFE3CF] shadow-sm">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#641E3D] text-white text-[9px] font-extrabold uppercase tracking-wider">
+                Super Admin HQ
+              </span>
+              <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#2A121E]">
+                Platform Command & Oversight
+              </h1>
+            </div>
+            <p className="text-[11px] text-[#786B70] font-medium mt-0.5">
+              Global marketplace metrics, partner verification queue, and celebration pipeline analytics
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <Link
+              href="/admin/queue"
+              className="px-4 py-2 rounded-xl bg-[#641E3D] hover:bg-[#4E152F] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md"
+            >
+              Review Verification Queue ({pendingVendors.length})
+            </Link>
+          </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {loading ? (
-            Array(4).fill(0).map((_, i) => (
-              <div key={i} className="luxury-card h-32 animate-pulse bg-gray-50" />
-            ))
-          ) : (
-            statsCards.map((card) => (
-              <div key={card.label} className="luxury-card border-none ring-1 ring-gray-100 flex items-center gap-5">
-                <div className={`${card.bg} p-4 rounded-xl`}>
-                  <card.icon className={`w-6 h-6 ${card.color}`} />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{card.label}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-0.5">{card.value}</p>
+        {/* ──── STATS GRID ──── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {statsCards.map((card, i) => (
+            <div key={i} className="bg-white p-4 rounded-xl border border-[#EFE3CF] space-y-1.5 shadow-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#8A7A70]">{card.label}</span>
+                <div className={`p-1 rounded-md ${card.bg} ${card.color}`}>
+                  <card.icon className="size-3.5" />
                 </div>
               </div>
-            ))
-          )}
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-xl font-bold text-[#2A121E]">{card.value}</span>
+                <span className="text-[10px] font-bold text-[#287857]">{card.sub}</span>
+              </div>
+              {card.href && (
+                <Link href={card.href} className="text-[9.5px] font-bold text-[#641E3D] hover:underline block pt-0.5">
+                  View Dossier →
+                </Link>
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Quick Actions / Recent Activity Placeholder */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 luxury-card">
-            <h3 className="text-xl font-serif font-bold mb-6">Recent Verifications</h3>
-            <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-              <div className="bg-gray-50 p-6 rounded-full">
-                <ClipboardList className="w-10 h-10 text-gray-200" />
-              </div>
-              <p className="text-gray-400 text-sm font-medium">Incoming request audit logs will appear here</p>
+        {/* ──── PLATFORM ANALYTICS ──── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Category Distribution (7 cols) */}
+          <div className="lg:col-span-7 bg-white p-5 rounded-2xl border border-[#EFE3CF] space-y-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#641E3D] flex items-center gap-1.5">
+                <TrendingUp className="size-3.5" />
+                Category Density & Partner Distribution
+              </h3>
+              <span className="text-[10px] font-bold text-[#8A6A23]">8 Active Categories</span>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              {[
+                { cat: "Luxury Palaces & Venues", count: 12, share: "28%", color: "bg-[#641E3D]" },
+                { cat: "Gourmet Catering & Kitchens", count: 10, share: "24%", color: "bg-[#D2AD6B]" },
+                { cat: "Candid Cinema & Photography", count: 9, share: "22%", color: "bg-[#8C2E58]" },
+                { cat: "Floral & Stage Architecture (Decor)", count: 7, share: "16%", color: "bg-[#287857]" },
+                { cat: "Bridal Styling & Entertainment", count: 4, share: "10%", color: "bg-[#3B5998]" },
+              ].map((item, idx) => (
+                <div key={idx} className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-[#2A121E]">{item.cat}</span>
+                    <span className="text-[#786B70]">{item.count} Partners ({item.share})</span>
+                  </div>
+                  <div className="h-2 w-full bg-[#FAF5EC] rounded-full overflow-hidden">
+                    <div className={`h-full ${item.color} rounded-full`} style={{ width: item.share }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-          
-          <div className="luxury-card bg-burgundy text-white">
-            <h3 className="text-xl font-serif font-bold mb-4">Verification Priority</h3>
-            <p className="text-white/70 text-sm leading-relaxed mb-6 italic">
-              "We maintain the highest standards for our partners. Please audit each vendor's portfolio thoroughly before manual approval."
-            </p>
-            <button className="w-full border border-[#b98f48] bg-gold text-[#30191f] py-3 rounded-xl font-bold hover:border-white/60 hover:bg-[#e2bf7e] hover:shadow-lg transition-all text-xs tracking-widest uppercase">
-              Go to Queue
-            </button>
+
+          {/* Quick Queue Spotlight (5 cols) */}
+          <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-[#EFE3CF] space-y-3.5 shadow-sm flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-[#641E3D] flex items-center gap-1.5">
+                  <ClipboardList className="size-3.5" />
+                  Recent Verification Submissions
+                </h3>
+                <Link href="/admin/queue" className="text-[10.5px] font-bold text-[#641E3D] hover:underline">
+                  Full Queue →
+                </Link>
+              </div>
+
+              <div className="space-y-2.5 pt-3">
+                {vendors.slice(0, 3).map((v) => (
+                  <div key={v.id} className="p-3 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl flex items-center justify-between text-xs">
+                    <div>
+                      <p className="font-bold text-[#2A121E]">{v.businessName}</p>
+                      <p className="text-[10px] text-[#786B70]">{v.category} • {v.city}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-[8.5px] font-bold uppercase ${
+                      v.status === 'VERIFIED' ? 'bg-[#EBF8F2] text-[#287857]' : 'bg-[#FAF1E3] text-[#8A6A23]'
+                    }`}>
+                      {v.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-3 bg-[#FCFAF6] border border-[#ECD8B5] rounded-xl text-[10.5px] text-[#786B70]">
+              🛡️ <b>Admin Protocol:</b> Verify that starting prices are within ±15% of market averages before granting the <b>Verified Partner</b> badge.
+            </div>
           </div>
         </div>
       </div>

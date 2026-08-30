@@ -2,229 +2,552 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import api from "@/lib/api";
+import { getCurrentVendor, updateVendorProfile } from "@/lib/vendorStore";
+import { VendorAccount } from "@/lib/mockData";
 import { 
-  UserCircle, 
   Store, 
   MapPin, 
-  Wallet, 
-  Tag, 
-  Loader2, 
+  IndianRupee, 
+  Users, 
+  Sparkles, 
   Save, 
+  Plus, 
+  Trash2, 
+  CheckCircle2, 
   ShieldCheck, 
-  MessageSquare
+  Eye, 
+  Clock, 
+  Tag,
+  Phone,
+  Mail,
+  Camera,
+  Layers,
+  Award,
+  Star
 } from "lucide-react";
 
-interface ProfileData {
-  businessName: string;
-  category: string;
-  city: string;
-  basePrice: number;
-  priceType: "PER_PLATE" | "PER_DAY" | "PER_EVENT" | "FIXED";
-}
+const CATEGORIES = [
+  "VENUE",
+  "CATERING",
+  "PHOTOGRAPHY",
+  "DECOR",
+  "MAKEUP",
+  "ENTERTAINMENT",
+  "PLANNING",
+  "PRIEST",
+];
 
-export default function VendorProfile() {
-  const [formData, setFormData] = useState<ProfileData>({
-    businessName: "",
-    category: "CATERING",
-    city: "Patiala",
-    basePrice: 0,
-    priceType: "PER_PLATE",
-  });
-  const [loading, setLoading] = useState(true);
+const CITIES = ["Patiala", "Chandigarh", "Ludhiana", "Amritsar", "Delhi NCR", "Jaipur", "Udaipur", "Goa"];
+
+export default function VendorProfilePage() {
+  const [vendor, setVendor] = useState<VendorAccount | null>(null);
   const [saving, setSaving] = useState(false);
-  const [isNewProfile, setIsNewProfile] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  // Form State
+  const [businessName, setBusinessName] = useState("");
+  const [category, setCategory] = useState("VENUE");
+  const [city, setCity] = useState("Patiala");
+  const [locality, setLocality] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [serviceRadiusKm, setServiceRadiusKm] = useState(50);
+  const [basePrice, setBasePrice] = useState(150000);
+  const [priceType, setPriceType] = useState<any>("PER_EVENT");
+  const [capacityMin, setCapacityMin] = useState(200);
+  const [capacityMax, setCapacityMax] = useState(1500);
+  const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [bannerUrl, setBannerUrl] = useState("");
+  const [amenities, setAmenities] = useState<string[]>([]);
+  const [newAmenityInput, setNewAmenityInput] = useState("");
+  const [packages, setPackages] = useState<any[]>([]);
 
   useEffect(() => {
-    async function fetchProfile() {
-      try {
-        const response = await api.get("/vendors/profile");
-        const { businessName, category, city, basePrice, priceType } = response.data;
-        setFormData({ businessName, category, city, basePrice, priceType });
-      } catch (err: any) {
-        if (err.response?.status === 404) {
-          setIsNewProfile(true);
-        } else {
-          console.error("Failed to fetch profile", err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProfile();
+    const v = getCurrentVendor();
+    setVendor(v);
+    setBusinessName(v.businessName || "");
+    setCategory(v.category || "VENUE");
+    setCity(v.city || "Patiala");
+    setLocality(v.locality || "");
+    setPhone(v.phone || "");
+    setEmail(v.email || "");
+    setServiceRadiusKm(v.serviceRadiusKm || 50);
+    setBasePrice(v.basePrice || 150000);
+    setPriceType(v.priceType || "PER_EVENT");
+    setCapacityMin(v.capacityMin || 100);
+    setCapacityMax(v.capacityMax || 1500);
+    setBio(v.bio || "");
+    setAvatarUrl(v.avatarUrl || "");
+    setBannerUrl(v.bannerUrl || "");
+    setAmenities(v.amenities || []);
+    setPackages(v.packages || []);
   }, []);
 
-  const handleUpdate = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!vendor) return;
     setSaving(true);
-    setMessage({ text: "", type: "" });
+    setMessage(null);
 
     try {
-      if (isNewProfile) {
-        await api.post("/vendors/profile", formData);
-        setIsNewProfile(false);
-        setMessage({ text: "Profile created successfully. Status: PENDING verification.", type: "success" });
-      } else {
-        await api.put("/vendors/profile", formData);
-        setMessage({ text: "Profile updated successfully. Your changes are live.", type: "success" });
-      }
-    } catch (err: any) {
-      setMessage({ text: err.response?.data?.error || "Failed to update profile.", type: "error" });
+      const updated = updateVendorProfile(
+        {
+          businessName,
+          category,
+          city,
+          locality,
+          phone,
+          email,
+          serviceRadiusKm: Number(serviceRadiusKm),
+          basePrice: Number(basePrice),
+          priceType,
+          capacityMin: Number(capacityMin),
+          capacityMax: Number(capacityMax),
+          bio,
+          avatarUrl,
+          bannerUrl,
+          amenities,
+          packages,
+        },
+        vendor.id
+      );
+
+      setVendor(updated);
+      setMessage({ text: "Atelier business profile & services updated successfully!", type: "success" });
+    } catch {
+      setMessage({ text: "Failed to update profile. Please check inputs.", type: "error" });
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout allowedRoles={["VENDOR"]}>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 animate-spin text-burgundy" />
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const handleAddAmenity = () => {
+    if (newAmenityInput.trim() && !amenities.includes(newAmenityInput.trim())) {
+      setAmenities([...amenities, newAmenityInput.trim()]);
+      setNewAmenityInput("");
+    }
+  };
+
+  const handleRemoveAmenity = (name: string) => {
+    setAmenities(amenities.filter((a) => a !== name));
+  };
+
+  const handleAddPackage = () => {
+    const newPkg = {
+      id: `pkg_${Date.now()}`,
+      name: "Bespoke Royal Package",
+      price: basePrice * 1.5,
+      priceType,
+      guestCount: 500,
+      description: "Comprehensive celebration coverage tailored for grand celebrations.",
+      inclusions: ["Dedicated Crew Lead", "Custom Thematic Design", "Complete Setup & Teardown"],
+      exclusions: ["Taxes & Travel Outside City"],
+    };
+    setPackages([...packages, newPkg]);
+  };
+
+  const handleRemovePackage = (pkgId: string) => {
+    setPackages(packages.filter((p) => p.id !== pkgId));
+  };
+
+  const handlePackageChange = (idx: number, field: string, val: any) => {
+    const next = [...packages];
+    next[idx][field] = val;
+    setPackages(next);
+  };
+
+  if (!vendor) return null;
 
   return (
     <DashboardLayout allowedRoles={["VENDOR"]}>
-      <div className="max-w-4xl space-y-8">
-        <div>
-          <h1 className="text-4xl font-serif font-bold text-gray-900">Business Profile</h1>
-          <p className="text-gray-500 mt-2 font-medium">Manage how your luxury brand appears to potential clients</p>
+      <form onSubmit={handleSave} className="space-y-6">
+        {/* ──── TOP HEADER & ACTIONS ──── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#EFE3CF] shadow-sm">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#2A121E]">
+              Business Profile & Services Manager
+            </h1>
+            <p className="text-[11px] text-[#786B70] font-medium mt-0.5">
+              Manage your atelier description, pricing models, service packages, and amenities
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2.5 rounded-xl bg-[#641E3D] hover:bg-[#4E152F] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
+            >
+              <Save className="size-3.5" />
+              {saving ? "Saving Changes..." : "Save Live Profile"}
+            </button>
+          </div>
         </div>
 
-        {message.text && (
-          <div className={`p-4 rounded-xl border flex items-center gap-3 text-sm font-medium ${
-            message.type === 'success' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'
+        {message && (
+          <div className={`p-3.5 rounded-xl text-xs font-bold border flex items-center gap-2 ${
+            message.type === 'success'
+              ? 'bg-[#EBF8F2] text-[#287857] border-[#C3ECD8]'
+              : 'bg-[#FDEDF0] text-[#B63A4A] border-[#F8CCD3]'
           }`}>
-            <ShieldCheck className="w-5 h-5" />
+            <CheckCircle2 className="size-4" />
             {message.text}
           </div>
         )}
 
-        <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Main Form Area */}
-          <div className="md:col-span-2 space-y-6">
-            <div className="luxury-card space-y-6">
-              <div className="space-y-4">
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-1">Legal Business Name</label>
-                <div className="relative group">
-                  <Store className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-burgundy transition-colors" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* ──── MAIN FORM (8 cols) ──── */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Section 1: Business Identity & Contact */}
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3CF] space-y-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#641E3D] flex items-center gap-1.5 pb-2 border-b border-[#F7EFE4]">
+                <Store className="size-4" />
+                1. Atelier Identity & Contact
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Atelier / Brand Name
+                  </label>
                   <input
-                    type="text" required
-                    value={formData.businessName}
-                    onChange={(e) => setFormData({ ...formData, businessName: e.target.value })}
-                    className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-burgundy/10 focus:border-burgundy font-medium transition-all"
-                    placeholder="Grand Palace Decorators"
+                    type="text"
+                    required
+                    value={businessName}
+                    onChange={(e) => setBusinessName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none focus:border-[#641E3D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Specialist Category
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none focus:border-[#641E3D]"
+                  >
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Operating City
+                  </label>
+                  <select
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none focus:border-[#641E3D]"
+                  >
+                    {CITIES.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Locality / Precinct
+                  </label>
+                  <input
+                    type="text"
+                    value={locality}
+                    onChange={(e) => setLocality(e.target.value)}
+                    placeholder="e.g. Model Town / Heritage Fort Rd"
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none focus:border-[#641E3D]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Service Radius (km)
+                  </label>
+                  <input
+                    type="number"
+                    value={serviceRadiusKm}
+                    onChange={(e) => setServiceRadiusKm(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none focus:border-[#641E3D]"
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                 <div className="space-y-4">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-1">Service Category</label>
-                  <div className="relative group">
-                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-burgundy transition-colors" />
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-burgundy/10 focus:border-burgundy font-medium appearance-none transition-all scroll-smooth"
-                    >
-                      {["VENUE", "CATERING", "DECOR", "PHOTOGRAPHY", "MAKEUP", "ENTERTAINMENT", "PRIEST", "MISC"].map(cat => (
-                        <option key={cat} value={cat}>{cat.charAt(0) + cat.slice(1).toLowerCase()}</option>
-                      ))}
-                    </select>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Official Phone
+                  </label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold text-[#2A121E] outline-none"
+                  />
                 </div>
 
-                <div className="space-y-4">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-1">Base Location</label>
-                  <div className="relative group">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-burgundy transition-colors" />
-                    <input
-                      type="text" required
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-burgundy/10 focus:border-burgundy font-medium transition-all"
-                      placeholder="e.g., Patiala"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Inquiry Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold text-[#2A121E] outline-none"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 pt-2">
-                <div className="space-y-4">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-1">Base Pricing (₹)</label>
-                  <div className="relative group">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-gray-400 group-focus-within:text-gold transition-colors">₹</span>
-                    <input
-                      type="number" required
-                      value={formData.basePrice}
-                      onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) })}
-                      className="w-full pl-10 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-burgundy/10 focus:border-burgundy font-medium transition-all"
-                      placeholder="1200"
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] px-1">Pricing Model</label>
-                  <div className="relative group">
-                    <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-300 group-focus-within:text-burgundy transition-colors" />
-                    <select
-                      value={formData.priceType}
-                      onChange={(e) => setFormData({ ...formData, priceType: e.target.value as any })}
-                      className="w-full pl-12 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-burgundy/10 focus:border-burgundy font-medium appearance-none transition-all"
-                    >
-                      <option value="PER_PLATE">Per Plate</option>
-                      <option value="PER_DAY">Per Day</option>
-                      <option value="PER_EVENT">Per Event</option>
-                      <option value="FIXED">Fixed Fee</option>
-                    </select>
-                  </div>
-                </div>
+              <div>
+                <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                  Atelier Story & Bio
+                </label>
+                <textarea
+                  rows={3}
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  className="w-full px-3.5 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-medium text-[#2A121E] outline-none focus:border-[#641E3D]"
+                />
               </div>
             </div>
 
-            <button
-              type="submit" disabled={saving}
-              className="w-full flex items-center justify-center gap-2 border border-burgundy bg-burgundy text-white py-4 rounded-xl font-bold shadow-md shadow-burgundy/15 hover:border-[#5f0d2e] hover:bg-[#5f0d2e] hover:shadow-lg hover:shadow-burgundy/25 hover:-translate-y-0.5 transition-all disabled:border-gray-300 disabled:bg-gray-200 disabled:text-gray-600 disabled:shadow-none disabled:pointer-events-none"
-            >
-              {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Brand Details</>}
-            </button>
-          </div>
-
-          {/* Sidebar / Info */}
-          <div className="space-y-6">
-            <div className="luxury-card bg-burgundy text-white border-none shadow-xl shadow-burgundy/10">
-               <div className="flex justify-between items-start mb-6">
-                 <div className="p-3 bg-white/10 rounded-xl">
-                   <ShieldCheck className="w-6 h-6 text-gold" />
-                 </div>
-                 <span className="text-[10px] font-bold bg-gold/20 text-gold px-2 py-0.5 rounded uppercase tracking-widest">Premium</span>
-               </div>
-               <h4 className="text-xl font-serif font-bold mb-3">Excellence Score</h4>
-               <p className="text-sm text-white/70 leading-relaxed italic">
-                 "Our AI verifies profile completeness every 24 hours. A complete profile with high-quality pricing data ranks 3x higher in the user app."
-               </p>
-            </div>
-
-            <div className="luxury-card">
-              <div className="flex items-center gap-3 mb-4">
-                <MessageSquare className="w-5 h-5 text-gold" />
-                <h4 className="text-sm font-bold uppercase tracking-[0.1em] text-gray-400">Concierge Help</h4>
-              </div>
-              <p className="text-xs text-gray-500 leading-relaxed font-medium">
-                Need help adjusting your category? Our support team can assist with high-tier classification.
+            {/* Section 2: Pricing Benchmark & Capacity */}
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3CF] space-y-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#641E3D] flex items-center gap-1.5 pb-2 border-b border-[#F7EFE4]">
+                <IndianRupee className="size-4" />
+                2. Pricing Benchmark & Capacity Scaling
               </p>
-              <button className="mt-5 inline-flex items-center rounded-lg border border-burgundy/25 bg-white px-3 py-2 text-xs font-bold text-burgundy shadow-sm transition-all hover:border-burgundy hover:bg-burgundy hover:text-white">
-                Contact Support
-              </button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Starting Benchmark Rate (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={basePrice}
+                    onChange={(e) => setBasePrice(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Pricing Benchmark Type
+                  </label>
+                  <select
+                    value={priceType}
+                    onChange={(e) => setPriceType(e.target.value as any)}
+                    className="w-full px-3 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none"
+                  >
+                    <option value="PER_EVENT">/ Per Event</option>
+                    <option value="PER_DAY">/ Per Day</option>
+                    <option value="PER_PLATE">/ Per Plate</option>
+                    <option value="FIXED">Fixed Flat Rate</option>
+                    <option value="STARTING_PRICE">Starting Rate</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Minimum Guests
+                  </label>
+                  <input
+                    type="number"
+                    value={capacityMin}
+                    onChange={(e) => setCapacityMin(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase tracking-wider mb-1">
+                    Maximum Capacity
+                  </label>
+                  <input
+                    type="number"
+                    value={capacityMax}
+                    onChange={(e) => setCapacityMax(Number(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-bold text-[#2A121E] outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Bespoke Service Packages / Tiers */}
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3CF] space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-[#F7EFE4]">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#641E3D] flex items-center gap-1.5">
+                  <Layers className="size-4" />
+                  3. Service Packages & Tiers ({packages.length})
+                </p>
+                <button
+                  type="button"
+                  onClick={handleAddPackage}
+                  className="px-3 py-1 rounded-lg bg-[#FAF5EC] border border-[#EFE3CF] text-[11px] font-bold text-[#641E3D] hover:bg-[#F3EADB]"
+                >
+                  + Add Package Tier
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {packages.map((pkg, idx) => (
+                  <div key={pkg.id || idx} className="p-4 bg-[#FCFAF6] border border-[#EFE3CF] rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <input
+                        type="text"
+                        value={pkg.name}
+                        onChange={(e) => handlePackageChange(idx, "name", e.target.value)}
+                        placeholder="Package Name (e.g. Royal Gold Suite)"
+                        className="font-bold text-xs bg-white px-3 py-1.5 border border-[#EFE3CF] rounded-lg text-[#2A121E] flex-1 mr-2"
+                      />
+                      <input
+                        type="number"
+                        value={pkg.price}
+                        onChange={(e) => handlePackageChange(idx, "price", Number(e.target.value))}
+                        placeholder="Price ₹"
+                        className="w-28 font-bold text-xs bg-white px-3 py-1.5 border border-[#EFE3CF] rounded-lg text-[#641E3D] mr-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePackage(pkg.id)}
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+
+                    <textarea
+                      rows={2}
+                      value={pkg.description}
+                      onChange={(e) => handlePackageChange(idx, "description", e.target.value)}
+                      placeholder="Scope and description of this package..."
+                      className="w-full text-xs bg-white px-3 py-1.5 border border-[#EFE3CF] rounded-lg"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 4: Key Amenities & Highlight Tags */}
+            <div className="bg-white p-6 rounded-2xl border border-[#EFE3CF] space-y-4">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#641E3D] flex items-center gap-1.5 pb-2 border-b border-[#F7EFE4]">
+                <Sparkles className="size-4" />
+                4. Key Amenities & Features
+              </p>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newAmenityInput}
+                  onChange={(e) => setNewAmenityInput(e.target.value)}
+                  placeholder="Add amenity (e.g. Valet Parking, Drone Pilot, 4K Rig)..."
+                  className="flex-1 px-3.5 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddAmenity}
+                  className="px-4 py-2 bg-[#641E3D] text-white text-xs font-bold rounded-xl"
+                >
+                  Add Tag
+                </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-1">
+                {amenities.map((am) => (
+                  <span
+                    key={am}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF5EC] border border-[#EFE3CF] text-xs font-bold text-[#641E3D]"
+                  >
+                    {am}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAmenity(am)}
+                      className="text-gray-400 hover:text-red-500 ml-1 text-xs"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-        </form>
-      </div>
+
+          {/* ──── SIDEBAR: LIVE CUSTOMER APP PREVIEW (4 cols) ──── */}
+          <div className="lg:col-span-4 space-y-4">
+            <div className="sticky top-20 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A7A70] flex items-center gap-1">
+                  <Eye className="size-3.5 text-[#641E3D]" />
+                  Live Customer Mobile Preview
+                </span>
+                <span className="text-[9px] text-[#287857] font-bold">Real-time sync</span>
+              </div>
+
+              {/* Mobile Phone Mockup Frame */}
+              <div className="bg-white rounded-3xl border-4 border-[#2A121E] shadow-2xl p-3.5 space-y-3 max-w-[320px] mx-auto">
+                {/* Simulated Image Slider */}
+                <div className="h-36 w-full rounded-2xl bg-[#2A121E] overflow-hidden relative">
+                  <img
+                    src={bannerUrl || "https://images.unsplash.com/photo-1545232979-fbf678ab2659?w=800"}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-sm text-[8.5px] font-extrabold uppercase tracking-wider text-[#641E3D]">
+                    {category}
+                  </div>
+                  <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#EBF8F2] text-[#287857] text-[8.5px] font-bold">
+                    ✓ Verified
+                  </div>
+                </div>
+
+                {/* Body Copy */}
+                <div>
+                  <h3 className="font-serif font-bold text-sm text-[#2A121E] truncate">
+                    {businessName || "Your Atelier Name"}
+                  </h3>
+                  <p className="text-[10px] text-[#786B70] flex items-center gap-1 mt-0.5">
+                    <MapPin className="size-3 text-[#8A6A23]" />
+                    {city} {locality ? `• ${locality}` : ''}
+                  </p>
+                </div>
+
+                {/* Rating & Capacity */}
+                <div className="flex items-center justify-between text-[10px] bg-[#FAF5EC] p-2 rounded-xl border border-[#EFE3CF]">
+                  <div className="flex items-center gap-1 font-bold text-[#2A121E]">
+                    <Star className="size-3 text-[#D2AD6B] fill-[#D2AD6B]" />
+                    4.9 (48)
+                  </div>
+                  <div className="text-[#641E3D] font-bold">
+                    {capacityMax} Max Guests
+                  </div>
+                </div>
+
+                {/* Price & Action */}
+                <div className="flex items-center justify-between pt-1 border-t border-[#F7EFE4]">
+                  <div>
+                    <span className="text-[8.5px] text-[#8A7A70] uppercase font-bold block">Starting at</span>
+                    <span className="font-bold text-sm text-[#641E3D]">
+                      ₹{Number(basePrice).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-lg bg-[#641E3D] text-white text-[10px] font-bold">
+                    + Package
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
     </DashboardLayout>
   );
 }

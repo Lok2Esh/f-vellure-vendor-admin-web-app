@@ -2,627 +2,499 @@
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
-import api from "@/lib/api";
-import {
-  Image as ImageIcon,
-  Plus,
-  Trash2,
-  Sparkles,
-  Users,
-  MapPin,
-  Calendar,
-  IndianRupee,
-  ShieldCheck,
-  CheckCircle2,
-  X,
-  Loader2,
-  Tag,
-  HeartHandshake,
+import { getCurrentVendor, getPortfolioForVendor, addPortfolioItem, deletePortfolioItem } from "@/lib/vendorStore";
+import { PortfolioItem, DEMO_VENDORS } from "@/lib/mockData";
+import { 
+  Sparkles, 
+  Plus, 
+  Trash2, 
+  CalendarDays, 
+  MapPin, 
+  IndianRupee, 
+  Users, 
+  Video, 
+  Image as ImageIcon, 
+  Star, 
+  CheckCircle2, 
+  X, 
   Search,
+  ExternalLink,
+  ChevronRight,
+  Play
 } from "lucide-react";
 
-interface Collaborator {
-  vendorId?: string;
-  name: string;
-  category?: string;
-  role?: string;
-  isRegistered?: boolean;
-}
-
-interface PortfolioItem {
-  id?: string;
-  title: string;
-  eventType?: string;
-  venue?: string;
-  city?: string;
-  date?: string;
-  budget?: number;
-  guestCount?: number;
-  scope?: string;
-  imageUrl?: string;
-  images?: string[];
-  collaborators?: Collaborator[];
-}
-
-const REGISTERED_PARTNERS_LIST = [
-  { id: "v1", name: "Fort Patiala Royal Heritage", category: "VENUE", role: "Venue Partner" },
-  { id: "v2", name: "Ranbaas The Palace", category: "VENUE", role: "Palace Venue" },
-  { id: "v3", name: "The Oberoi Sukhvilas", category: "VENUE", role: "Luxury Resort" },
-  { id: "p1", name: "Rohan Roy Candid Studios", category: "PHOTOGRAPHY", role: "Candid & Cinema Lead" },
-  { id: "p2", name: "Bansal Creations Cinematic", category: "PHOTOGRAPHY", role: "Cinematography" },
-  { id: "c1", name: "Bhogal Caterers & Royal Kitchen", category: "CATERING", role: "Royal Cuisine Feast" },
-  { id: "d1", name: "Flora Belle Luxury Decor", category: "DECOR", role: "Floral Mandap & Stage" },
-  { id: "m1", name: "Glam Studio by Simran", category: "MAKEUP", role: "Bridal Makeup" },
-  { id: "e1", name: "DJ Sunny Sound & Stage Lights", category: "ENTERTAINMENT", role: "Sangeet DJ & Concert Setup" },
-];
-
-export default function VendorPortfolio() {
+export default function VendorPortfolioPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [activeMediaItem, setActiveMediaItem] = useState<PortfolioItem | null>(null);
 
-  // Form State
+  // Form State for Add Work
   const [title, setTitle] = useState("");
-  const [eventType, setEventType] = useState("Grand Wedding");
-  const [venue, setVenue] = useState("");
+  const [eventType, setEventType] = useState("Grand Royal Wedding");
+  const [venue, setVenue] = useState("Fort Patiala Royal Heritage");
   const [city, setCity] = useState("Patiala");
-  const [date, setDate] = useState("Nov 2025");
-  const [budget, setBudget] = useState("");
-  const [guestCount, setGuestCount] = useState("");
+  const [date, setDate] = useState("February 2026");
+  const [budget, setBudget] = useState(3500000);
+  const [guestCount, setGuestCount] = useState(650);
   const [scope, setScope] = useState("");
-  const [imageInput, setImageInput] = useState("");
-  const [images, setImages] = useState<string[]>([
-    "https://images.unsplash.com/photo-1545232979-fbf678ab2659?w=800",
-  ]);
+  const [imageUrl, setImageUrl] = useState("https://images.unsplash.com/photo-1519741497674-611481863552?w=1000");
+  const [videoUrl, setVideoUrl] = useState("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  const [clientName, setClientName] = useState("");
+  const [clientQuote, setClientQuote] = useState("");
+  const [selectedCollaborators, setSelectedCollaborators] = useState<any[]>([]);
 
-  // Collabs Form State
-  const [collabMode, setCollabMode] = useState<"APP" | "MANUAL">("APP");
-  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
-  const [partnerSearchQuery, setPartnerSearchQuery] = useState("");
-  const [manualName, setManualName] = useState("");
-  const [manualCategory, setManualCategory] = useState("DECOR");
-  const [manualRole, setManualRole] = useState("");
+  const vendor = getCurrentVendor();
 
   useEffect(() => {
-    async function fetchPortfolio() {
-      try {
-        const response = await api.get("/vendors/profile");
-        if (response.data && Array.isArray(response.data.portfolio) && response.data.portfolio.length > 0) {
-          setItems(response.data.portfolio);
-        } else {
-          // Demo items for preview
-          setItems([
-            {
-              id: "demo_1",
-              title: "Royal Courtyard Evening Setup",
-              eventType: "Grand Wedding",
-              venue: "Fort Patiala",
-              city: "Patiala",
-              date: "Nov 2025",
-              budget: 1800000,
-              guestCount: 650,
-              scope: "Complete courtyard transformation with floral mandap, vintage chandeliers, and red carpet entrance.",
-              imageUrl: "https://images.unsplash.com/photo-1545232979-fbf678ab2659?w=800",
-              images: [
-                "https://images.unsplash.com/photo-1545232979-fbf678ab2659?w=800",
-                "https://images.unsplash.com/photo-1519741497674-611481863552?w=800",
-                "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
-              ],
-              collaborators: [
-                { vendorId: "p1", name: "Rohan Roy Candid Studios", category: "PHOTOGRAPHY", role: "Candid Cinema", isRegistered: true },
-                { vendorId: "c1", name: "Bhogal Caterers", category: "CATERING", role: "Gourmet Pure Veg Banquet", isRegistered: true },
-                { name: "Flora Belle Luxury Decor", category: "DECOR", role: "Mandap & Chandeliers", isRegistered: false },
-              ],
-            },
-          ]);
-        }
-      } catch (err) {
-        console.error("Failed to load portfolio", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchPortfolio();
-  }, []);
+    setItems(getPortfolioForVendor(vendor.id));
+  }, [vendor.id]);
 
-  const handleAddImage = () => {
-    if (!imageInput.trim()) return;
-    setImages((prev) => [...prev, imageInput.trim()]);
-    setImageInput("");
-  };
-
-  const handleRemoveImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleAddAppVendor = (v: (typeof REGISTERED_PARTNERS_LIST)[0]) => {
-    if (collaborators.some((c) => c.vendorId === v.id || c.name === v.name)) return;
-    setCollaborators((prev) => [
-      ...prev,
-      { vendorId: v.id, name: v.name, category: v.category, role: v.role, isRegistered: true },
-    ]);
-  };
-
-  const handleAddManualVendor = () => {
-    if (!manualName.trim()) return;
-    setCollaborators((prev) => [
-      ...prev,
+  const handleCreateWork = (e: React.FormEvent) => {
+    e.preventDefault();
+    const created = addPortfolioItem(
       {
-        name: manualName.trim(),
-        category: manualCategory,
-        role: manualRole.trim() || `${manualCategory} Specialist`,
-        isRegistered: false,
+        title: title || "Celebration Showcase",
+        eventType,
+        venue,
+        city,
+        date,
+        budget: Number(budget),
+        guestCount: Number(guestCount),
+        scope: scope || "Full bespoke management & execution.",
+        imageUrl: imageUrl || "https://images.unsplash.com/photo-1545232979-fbf678ab2659?w=1000",
+        images: [
+          imageUrl || "https://images.unsplash.com/photo-1545232979-fbf678ab2659?w=1000",
+          "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=1000",
+        ],
+        videoUrl,
+        clientReview: clientQuote
+          ? {
+              clientName: clientName || "Verified Couple",
+              quote: clientQuote,
+              rating: 5,
+            }
+          : undefined,
+        collaborators: selectedCollaborators,
       },
-    ]);
-    setManualName("");
-    setManualRole("");
-  };
+      vendor.id
+    );
 
-  const handleRemoveCollab = (index: number) => {
-    setCollaborators((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSaveItem = async () => {
-    if (!title.trim()) return;
-    setSaving(true);
-
-    const newItem: PortfolioItem = {
-      id: `port_${Date.now()}`,
-      title: title.trim(),
-      eventType: eventType.trim(),
-      venue: venue.trim() || "Grand Estate",
-      city: city.trim() || "Patiala",
-      date: date.trim() || "Recent Event",
-      budget: budget ? Number(budget) : 1500000,
-      guestCount: guestCount ? Number(guestCount) : 400,
-      scope: scope.trim() || "Full event design, styling, and coordination deliverables.",
-      imageUrl: images[0] || "",
-      images: images.length > 0 ? images : undefined,
-      collaborators,
-    };
-
-    try {
-      if (images[0]) {
-        await api.post("/vendors/portfolio", {
-          imageUrl: images[0],
-          title: title.trim(),
-        });
-      }
-    } catch (_) {}
-
-    setItems((prev) => [newItem, ...prev]);
-    setSaving(false);
-    setShowModal(false);
+    setItems([created, ...items]);
+    setShowAddModal(false);
 
     // Reset Form
     setTitle("");
-    setVenue("");
     setScope("");
-    setCollaborators([]);
+    setClientQuote("");
   };
 
-  if (loading) {
-    return (
-      <DashboardLayout allowedRoles={["VENDOR"]}>
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 animate-spin text-burgundy" />
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const handleDeleteWork = (id: string) => {
+    if (confirm("Are you sure you want to remove this work history entry from your public showcase?")) {
+      deletePortfolioItem(id);
+      setItems(items.filter((it) => it.id !== id));
+    }
+  };
+
+  const toggleCollaborator = (v: any) => {
+    if (selectedCollaborators.some((c) => c.vendorId === v.id)) {
+      setSelectedCollaborators(selectedCollaborators.filter((c) => c.vendorId !== v.id));
+    } else {
+      setSelectedCollaborators([
+        ...selectedCollaborators,
+        { vendorId: v.id, name: v.businessName, category: v.category, role: `${v.category} Partner`, isRegistered: true },
+      ]);
+    }
+  };
 
   return (
     <DashboardLayout allowedRoles={["VENDOR"]}>
-      <div className="max-w-5xl space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-6">
+        {/* ──── TOP HEADER ──── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#EFE3CF] shadow-sm">
           <div>
-            <h1 className="text-4xl font-serif font-bold text-gray-900">Work History & Portfolio</h1>
-            <p className="text-gray-500 mt-2 font-medium">
-              Showcase verified celebrations, photo collages, and credited vendor collaborations
+            <h1 className="text-xl sm:text-2xl font-serif font-bold text-[#2A121E]">
+              Work History & Portfolio Atelier ({items.length})
+            </h1>
+            <p className="text-[11px] text-[#786B70] font-medium mt-0.5">
+              Showcase past weddings with high-res galleries, cinematic video links, scope deliverables, and collaborator tags
             </p>
           </div>
+
           <button
-            onClick={() => setShowModal(true)}
-            className="inline-flex items-center gap-2 border border-burgundy bg-burgundy text-white px-5 py-3 rounded-xl font-bold shadow-md shadow-burgundy/15 hover:bg-[#5f0d2e] hover:shadow-lg transition-all"
+            type="button"
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2.5 rounded-xl bg-[#641E3D] hover:bg-[#4E152F] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-md transition-all"
           >
-            <Plus className="w-5 h-5" />
-            Add Celebration Case Study
+            <Plus className="size-3.5" />
+            + Add Past Celebration Work
           </button>
         </div>
 
-        {/* Portfolio Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {items.map((item, idx) => {
-            const cardImages = item.images && item.images.length > 0 ? item.images : item.imageUrl ? [item.imageUrl] : [];
-            const collabs = item.collaborators || [];
+        {/* ──── WORKS GRID (HIGH DENSITY) ──── */}
+        {items.length === 0 ? (
+          <div className="p-12 text-center bg-white rounded-2xl border border-[#EFE3CF] space-y-3">
+            <Sparkles className="size-8 text-[#D2AD6B] mx-auto" />
+            <h3 className="font-serif font-bold text-lg text-[#2A121E]">No Work History Entries Yet</h3>
+            <p className="text-xs text-[#786B70] max-w-md mx-auto">
+              Add your past weddings, palace banquets, or candid shoots to build customer trust and showcase your capabilities.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-[#641E3D] text-white text-xs font-bold rounded-xl"
+            >
+              + Create First Entry
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {items.map((work) => (
+              <div
+                key={work.id}
+                className="bg-white rounded-2xl border border-[#EFE3CF] overflow-hidden shadow-sm flex flex-col justify-between group hover:border-[#641E3D]/40 transition-all"
+              >
+                {/* Media Header with Overlay & Video Tag */}
+                <div className="h-52 w-full relative bg-[#2A121E] overflow-hidden">
+                  <img
+                    src={work.imageUrl}
+                    alt={work.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-            return (
-              <div key={item.id || idx} className="luxury-card overflow-hidden p-0 border border-gray-100 flex flex-col bg-white">
-                {/* Images Collage Header */}
-                <div className="relative h-56 bg-gray-100 flex overflow-hidden">
-                  {cardImages.length > 0 ? (
-                    <div className="w-full h-full flex gap-1">
-                      <div className="flex-1 relative">
-                        <img src={cardImages[0]} alt={item.title} className="w-full h-full object-cover" />
-                        <div className="absolute left-3 bottom-3 bg-black/70 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5">
-                          <ImageIcon className="w-3 h-3 text-gold" />
-                          Featured Work
-                        </div>
-                      </div>
-                      {cardImages.length > 1 && (
-                        <div className="w-1/3 flex flex-col gap-1">
-                          {cardImages.slice(1, 3).map((img, i) => (
-                            <div key={i} className="flex-1 relative overflow-hidden">
-                              <img src={img} alt="" className="w-full h-full object-cover" />
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <ImageIcon className="w-10 h-10 text-gray-300" />
-                    </div>
-                  )}
-                  {cardImages.length > 1 && (
-                    <div className="absolute right-3 bottom-3 bg-burgundy/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full">
-                      {cardImages.length} Photos
-                    </div>
-                  )}
+                  {/* Badges */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    <span className="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[9px] font-extrabold uppercase tracking-wider text-[#641E3D]">
+                      {work.eventType}
+                    </span>
+                    {work.videoUrl && (
+                      <span className="px-2.5 py-1 rounded-full bg-[#641E3D]/90 backdrop-blur-sm text-[9px] font-bold text-white flex items-center gap-1">
+                        <Play className="size-2.5 fill-white" /> 4K Video
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="absolute top-3 right-3">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteWork(work.id)}
+                      className="p-1.5 rounded-lg bg-black/40 hover:bg-red-600 text-white backdrop-blur-sm transition-colors"
+                      title="Remove Entry"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Bottom Image Overlay Title */}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <h3 className="font-serif font-bold text-base text-white leading-tight drop-shadow-sm">
+                      {work.title}
+                    </h3>
+                    <p className="text-[10.5px] text-[#E8CF9F] font-semibold mt-0.5 flex items-center gap-2">
+                      <span>{work.venue} ({work.city})</span>
+                      <span>•</span>
+                      <span>{work.date}</span>
+                    </p>
+                  </div>
                 </div>
 
-                {/* Card Body */}
-                <div className="p-5 flex-1 flex flex-col space-y-4">
-                  <div className="flex items-start justify-between gap-3">
+                {/* Content Details */}
+                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between text-xs">
+                  {/* Stats Bar */}
+                  <div className="grid grid-cols-2 gap-2 p-2.5 bg-[#FAF5EC] rounded-xl border border-[#EFE3CF] text-[10.5px]">
                     <div>
-                      <span className="text-[10px] font-bold text-gold uppercase tracking-widest">{item.eventType || "Grand Celebration"}</span>
-                      <h3 className="text-lg font-bold text-gray-900 mt-1">{item.title}</h3>
+                      <span className="text-[8.5px] font-bold uppercase text-[#8A7A70] block">Guest Scale</span>
+                      <span className="font-bold text-[#2A121E] flex items-center gap-1">
+                        <Users className="size-3 text-[#641E3D]" />
+                        {work.guestCount} Guests
+                      </span>
                     </div>
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-md uppercase">
-                      <ShieldCheck className="w-3 h-3" />
-                      Verified
+                    <div>
+                      <span className="text-[8.5px] font-bold uppercase text-[#8A7A70] block">Project Budget</span>
+                      <span className="font-bold text-[#2A121E] flex items-center gap-1">
+                        <IndianRupee className="size-3 text-[#8A6A23]" />
+                        ₹{(work.budget / 100000).toFixed(1)} Lakhs
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Scope of Work */}
+                  <div>
+                    <span className="text-[9.5px] font-bold uppercase tracking-wider text-[#8A7A70] block mb-1">
+                      Deliverables & Scope
                     </span>
+                    <p className="text-[11px] text-[#4A3B40] leading-relaxed line-clamp-2">
+                      {work.scope}
+                    </p>
                   </div>
 
-                  {/* 4 Metric Chips */}
-                  <div className="grid grid-cols-2 gap-2 text-xs bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <MapPin className="w-3.5 h-3.5 text-burgundy shrink-0" />
-                      <span className="truncate font-medium">{item.venue || item.city}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="w-3.5 h-3.5 text-burgundy shrink-0" />
-                      <span className="font-medium">{item.date || "Recent"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Users className="w-3.5 h-3.5 text-burgundy shrink-0" />
-                      <span className="font-medium">{item.guestCount ? `${item.guestCount} guests` : "400 guests"}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <IndianRupee className="w-3.5 h-3.5 text-burgundy shrink-0" />
-                      <span className="font-medium">₹{item.budget?.toLocaleString("en-IN") || "15,00,000"}</span>
-                    </div>
-                  </div>
-
-                  {/* Collaborators Preview */}
-                  {collabs.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                        <span className="flex items-center gap-1.5">
-                          <HeartHandshake className="w-3.5 h-3.5 text-burgundy" />
-                          Celebration Collabs ({collabs.length})
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {collabs.map((c, i) => (
+                  {/* Collaborators Tag */}
+                  {work.collaborators && work.collaborators.length > 0 && (
+                    <div>
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#641E3D] block mb-1">
+                        Tagged Partner Network
+                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {work.collaborators.map((col, idx) => (
                           <span
-                            key={i}
-                            className={`text-xs px-2.5 py-1 rounded-lg border font-medium flex items-center gap-1.5 ${
-                              c.isRegistered ? "bg-green-50 border-green-100 text-green-800" : "bg-gray-50 border-gray-100 text-gray-700"
-                            }`}
+                            key={idx}
+                            className="px-2 py-0.5 rounded-md bg-[#FAF5EC] border border-[#EFE3CF] text-[9.5px] font-bold text-[#2A121E]"
                           >
-                            <span className="font-bold">{c.name}</span>
-                            <span className="text-[10px] text-gray-400">({c.role || c.category})</span>
-                            {c.isRegistered && <Sparkles className="w-2.5 h-2.5 text-green-600" />}
+                            {col.name} ({col.category})
                           </span>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Scope */}
-                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed font-medium">
-                    {item.scope || "Complete setup, styling, and coordination deliverables."}
+                  {/* Testimonial Quote */}
+                  {work.clientReview && (
+                    <div className="p-2.5 bg-[#FCFAF6] border border-[#ECD8B5] rounded-xl text-[10.5px] italic text-[#5D4A52] space-y-1">
+                      <div className="flex items-center gap-1 text-[#D2AD6B]">
+                        <Star className="size-3 fill-[#D2AD6B]" />
+                        <Star className="size-3 fill-[#D2AD6B]" />
+                        <Star className="size-3 fill-[#D2AD6B]" />
+                        <Star className="size-3 fill-[#D2AD6B]" />
+                        <Star className="size-3 fill-[#D2AD6B]" />
+                        <span className="text-[9px] font-bold not-italic text-[#2A121E] ml-1">
+                          — {work.clientReview.clientName}
+                        </span>
+                      </div>
+                      <p>"{work.clientReview.quote}"</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ──── ADD WORK HISTORY MODAL ──── */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white max-w-2xl w-full rounded-2xl border border-[#EFE3CF] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+              <div className="p-5 border-b border-[#EFE3CF] bg-[#FCFAF6] flex items-center justify-between">
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-[#2A121E]">
+                    Add Past Celebration Work
+                  </h3>
+                  <p className="text-[10.5px] text-[#786B70]">
+                    Publish high-res photos, video links, guest metrics, and collaborator tags
                   </p>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Modal: Add Case Study */}
-        {showModal && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white rounded-2xl max-w-2xl w-full p-6 space-y-6 shadow-2xl border border-gray-100 my-8">
-              <div className="flex items-center justify-between border-b pb-4">
-                <div>
-                  <h3 className="text-xl font-serif font-bold text-gray-900">Add Celebration Case Study</h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Showcase your delivered celebrations with photo collage and partner credits</p>
-                </div>
-                <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400">
-                  <X className="w-5 h-5" />
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="size-8 rounded-lg border border-[#EFE3CF] hover:bg-gray-100 flex items-center justify-center"
+                >
+                  <X className="size-4" />
                 </button>
               </div>
 
-              <div className="space-y-4 max-h-[68vh] overflow-y-auto pr-1">
-                {/* 1. Event Details */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-burgundy uppercase tracking-widest">1. Celebration Info</h4>
+              <form onSubmit={handleCreateWork} className="p-5 space-y-4 overflow-y-auto flex-1 text-xs">
+                {/* Title & Type */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Celebration Title *</label>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Event Title
+                    </label>
                     <input
                       type="text"
+                      required
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g. Royal Courtyard Evening Setup"
-                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy font-medium"
+                      placeholder="e.g. Royal Wedding of Kabir & Navjot"
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
                     />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Event Type</label>
-                      <input
-                        type="text"
-                        value={eventType}
-                        onChange={(e) => setEventType(e.target.value)}
-                        placeholder="Grand Wedding"
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Event Date</label>
-                      <input
-                        type="text"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        placeholder="Nov 2025"
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy font-medium"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Venue & Location</label>
-                      <input
-                        type="text"
-                        value={venue}
-                        onChange={(e) => setVenue(e.target.value)}
-                        placeholder="Fort Patiala"
-                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Guest Scale & Budget</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="number"
-                          value={guestCount}
-                          onChange={(e) => setGuestCount(e.target.value)}
-                          placeholder="Guests"
-                          className="w-full px-2.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy font-medium"
-                        />
-                        <input
-                          type="number"
-                          value={budget}
-                          onChange={(e) => setBudget(e.target.value)}
-                          placeholder="₹ Budget"
-                          className="w-full px-2.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy font-medium"
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Scope of Work & Deliverables</label>
-                    <textarea
-                      rows={2}
-                      value={scope}
-                      onChange={(e) => setScope(e.target.value)}
-                      placeholder="Describe the floral mandap, lighting, decor themes, and deliverables..."
-                      className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* 2. Photo URLs */}
-                <div className="space-y-3 pt-2 border-t">
-                  <h4 className="text-xs font-bold text-burgundy uppercase tracking-widest">2. Showcase Photos (Collage)</h4>
-                  <div className="flex gap-2">
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Event Type
+                    </label>
                     <input
                       type="text"
-                      value={imageInput}
-                      onChange={(e) => setImageInput(e.target.value)}
-                      placeholder="Paste image URL (https://...)"
-                      className="flex-1 px-3.5 py-2 bg-gray-50 border border-gray-100 rounded-xl text-sm outline-none focus:border-burgundy"
+                      required
+                      value={eventType}
+                      onChange={(e) => setEventType(e.target.value)}
+                      placeholder="e.g. Grand Royal Wedding / Sangeet Gala"
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
                     />
-                    <button
-                      type="button"
-                      onClick={handleAddImage}
-                      className="px-4 py-2 bg-burgundy text-white rounded-xl text-xs font-bold hover:bg-[#5f0d2e]"
-                    >
-                      Add Photo
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {images.map((img, i) => (
-                      <div key={i} className="flex items-center gap-1.5 bg-gray-50 border border-gray-100 px-3 py-1.5 rounded-lg text-xs font-medium">
-                        <ImageIcon className="w-3 h-3 text-gold" />
-                        <span className="max-w-[200px] truncate">{img}</span>
-                        <button type="button" onClick={() => handleRemoveImage(i)} className="text-red-500 ml-1">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
                   </div>
                 </div>
 
-                {/* 3. Vendor Collaborations */}
-                <div className="space-y-3 pt-2 border-t">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold text-burgundy uppercase tracking-widest">3. Vendor Collaborations (Crew)</h4>
-                    <div className="flex bg-gray-100 p-1 rounded-lg text-[10px] font-bold">
-                      <button
-                        type="button"
-                        onClick={() => setCollabMode("APP")}
-                        className={`px-2.5 py-1 rounded-md transition-all ${collabMode === "APP" ? "bg-burgundy text-white" : "text-gray-600"}`}
-                      >
-                        Platform Partners
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setCollabMode("MANUAL")}
-                        className={`px-2.5 py-1 rounded-md transition-all ${collabMode === "MANUAL" ? "bg-burgundy text-white" : "text-gray-600"}`}
-                      >
-                        Manual Entry
-                      </button>
-                    </div>
+                {/* Venue & Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Venue / Palace Name
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={venue}
+                      onChange={(e) => setVenue(e.target.value)}
+                      placeholder="e.g. Fort Patiala Outer Lawns"
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
+                    />
                   </div>
 
-                  {/* Added Collaborators Chips */}
-                  {collaborators.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {collaborators.map((c, i) => (
-                        <div key={i} className="flex items-center gap-1.5 bg-gold/10 border border-gold/20 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-medium">
-                          <HeartHandshake className="w-3 h-3 text-gold" />
-                          <span>{c.name} ({c.role || c.category})</span>
-                          <button type="button" onClick={() => handleRemoveCollab(i)} className="text-red-500 ml-1">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Celebration Date
+                    </label>
+                    <input
+                      type="text"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                      placeholder="e.g. Jan 2026"
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
+                    />
+                  </div>
+                </div>
 
-                  {collabMode === "APP" ? (
-                    <div className="space-y-2">
-                      <div className="relative">
-                        <Search className="w-3.5 h-3.5 text-gray-400 absolute left-3 top-2.5" />
-                        <input
-                          type="text"
-                          value={partnerSearchQuery}
-                          onChange={(e) => setPartnerSearchQuery(e.target.value)}
-                          placeholder="Search partners by name, category or city..."
-                          className="w-full pl-8 pr-8 py-1.5 bg-gray-50 border border-gray-100 rounded-lg text-xs outline-none focus:border-burgundy"
-                        />
-                        {partnerSearchQuery && (
-                          <button
-                            type="button"
-                            onClick={() => setPartnerSearchQuery("")}
-                            className="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                {/* Budget & Guests */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Project Budget (₹)
+                    </label>
+                    <input
+                      type="number"
+                      value={budget}
+                      onChange={(e) => setBudget(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
+                    />
+                  </div>
 
-                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
-                        {REGISTERED_PARTNERS_LIST.filter((pv) => {
-                          if (!partnerSearchQuery.trim()) return true;
-                          const q = partnerSearchQuery.toLowerCase().trim();
-                          return (
-                            pv.name.toLowerCase().includes(q) ||
-                            pv.role.toLowerCase().includes(q) ||
-                            pv.category.toLowerCase().includes(q)
-                          );
-                        }).map((pv) => {
-                          const isAdded = collaborators.some((c) => c.vendorId === pv.id);
-                          return (
-                            <button
-                              key={pv.id}
-                              type="button"
-                              onClick={() => handleAddAppVendor(pv)}
-                              className={`p-2.5 rounded-xl border text-left flex items-center justify-between text-xs transition-all ${
-                                isAdded ? "bg-green-50 border-green-200 text-green-800" : "bg-gray-50 border-gray-100 hover:border-burgundy"
-                              }`}
-                            >
-                              <div className="truncate">
-                                <p className="font-bold truncate">{pv.name}</p>
-                                <p className="text-[10px] text-gray-400">{pv.role}</p>
-                              </div>
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-white border shrink-0">
-                                {isAdded ? "Added" : "+ Add"}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-                      <div className="grid grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          value={manualName}
-                          onChange={(e) => setManualName(e.target.value)}
-                          placeholder="Partner Name (e.g. Bansal Decor)"
-                          className="col-span-2 px-3 py-2 bg-white border border-gray-100 rounded-lg text-xs outline-none focus:border-burgundy"
-                        />
-                        <select
-                          value={manualCategory}
-                          onChange={(e) => setManualCategory(e.target.value)}
-                          className="px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs outline-none"
-                        >
-                          <option value="DECOR">Decor</option>
-                          <option value="PHOTOGRAPHY">Photography</option>
-                          <option value="CATERING">Catering</option>
-                          <option value="MAKEUP">Makeup</option>
-                          <option value="VENUE">Venue</option>
-                          <option value="ENTERTAINMENT">DJ / Music</option>
-                        </select>
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={manualRole}
-                          onChange={(e) => setManualRole(e.target.value)}
-                          placeholder="Optional specific role (e.g. Mandap Floral Stylist)"
-                          className="flex-1 px-3 py-2 bg-white border border-gray-100 rounded-lg text-xs outline-none focus:border-burgundy"
-                        />
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Guest Count
+                    </label>
+                    <input
+                      type="number"
+                      value={guestCount}
+                      onChange={(e) => setGuestCount(Number(e.target.value))}
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Media Links */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Cover Image URL
+                    </label>
+                    <input
+                      type="url"
+                      required
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Video Reel URL (YouTube / Vimeo / MP4)
+                    </label>
+                    <input
+                      type="url"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      placeholder="https://youtube.com/watch?v=..."
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs font-semibold outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Scope */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                    Deliverables & Execution Scope
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={scope}
+                    onChange={(e) => setScope(e.target.value)}
+                    placeholder="Describe lighting, crew size, stages built, live food counters, and special moments..."
+                    className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs outline-none"
+                  />
+                </div>
+
+                {/* Tag Collaborator Partners */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#641E3D] uppercase mb-1.5">
+                    Tag Partner Ateliers Involved
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {DEMO_VENDORS.map((v) => {
+                      const isSelected = selectedCollaborators.some((c) => c.vendorId === v.id);
+                      return (
                         <button
+                          key={v.id}
                           type="button"
-                          onClick={handleAddManualVendor}
-                          className="px-4 py-2 bg-burgundy text-white rounded-lg text-xs font-bold"
+                          onClick={() => toggleCollaborator(v)}
+                          className={`px-2.5 py-1 rounded-lg text-[10.5px] font-bold transition-all border ${
+                            isSelected
+                              ? 'bg-[#641E3D] text-white border-[#641E3D]'
+                              : 'bg-[#FAF5EC] text-[#2A121E] border-[#EFE3CF] hover:bg-[#F3EADB]'
+                          }`}
                         >
-                          Add Collab
+                          {isSelected ? '✓ ' : '+ '}
+                          {v.businessName} ({v.category})
                         </button>
-                      </div>
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
 
-              {/* Modal Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 border rounded-xl font-bold text-xs text-gray-600 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={handleSaveItem}
-                  className="px-6 py-2.5 bg-burgundy text-white rounded-xl font-bold text-xs hover:bg-[#5f0d2e] disabled:opacity-50 flex items-center gap-2"
-                >
-                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Publish Case Study"}
-                </button>
-              </div>
+                {/* Client Review */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Client / Couple Name
+                    </label>
+                    <input
+                      type="text"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="e.g. Simran & Jaspreet Grewal"
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#786B70] uppercase mb-1">
+                      Client Testimonial Quote
+                    </label>
+                    <input
+                      type="text"
+                      value={clientQuote}
+                      onChange={(e) => setClientQuote(e.target.value)}
+                      placeholder="e.g. The palace looked like a fairytale under the stars..."
+                      className="w-full px-3 py-2 bg-[#FAF5EC] border border-[#EFE3CF] rounded-xl text-xs outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2 rounded-xl bg-[#FAF5EC] border border-[#EFE3CF] text-xs font-bold text-[#786B70]"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 rounded-xl bg-[#641E3D] hover:bg-[#4E152F] text-white text-xs font-bold uppercase tracking-wider shadow-md"
+                  >
+                    Publish to Marketplace Showcase →
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

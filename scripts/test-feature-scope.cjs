@@ -1,0 +1,24 @@
+const path=require('node:path'),assert=require('node:assert/strict');
+const backend=path.resolve(__dirname,'../../vellure-backend');
+require(path.join(backend,'node_modules/ts-node')).register({project:path.join(backend,'tsconfig.json'),transpileOnly:true});
+const {FeatureScopeGuard}=require(path.join(backend,'src/modules/features/feature-scope.guard.ts'));
+process.env.VELLURE_ADMIN_EMAIL='admin@example.com';
+const guard=new FeatureScopeGuard({feature:{findUnique:async({where})=>({vendorId:where.id==='own'?'vendor-a':'vendor-b'})}});
+const vendor={status:'ACTIVE',email:'owner@example.com',roles:['VENDOR_OWNER'],vendorIds:['vendor-a']};
+const request=(override={})=>({user:vendor,method:'GET',path:'/features/admin/list',params:{},query:{},body:{},...override});
+const run=req=>guard.canActivate({switchToHttp:()=>({getRequest:()=>req})});
+(async()=>{
+ const list=request();assert.equal(await run(list),true);assert.equal(list.query.vendorId,'vendor-a');
+ await assert.rejects(run(request({params:{id:'foreign'}})));
+ assert.equal(await run(request({params:{id:'own'}})),true);
+ await assert.rejects(run(request({query:{vendorId:'vendor-b'}})));
+ await assert.rejects(run(request({method:'POST',body:{vendorId:'vendor-b'}})));
+ await assert.rejects(run(request({method:'POST',body:{placement:'HOME_HERO'}})));
+ const create=request({method:'POST'});await run(create);assert.equal(create.body.vendorId,'vendor-a');assert.equal(create.body.placement,'VENDOR_DETAIL');
+ await assert.rejects(run(request({method:'DELETE'})));await assert.rejects(run(request({method:'PUT'})));
+ await assert.rejects(run(request({user:{...vendor,status:'BLOCKED'}})));
+ await assert.rejects(run(request({user:{...vendor,roles:['VENDOR_STAFF']}})));
+ await assert.rejects(run(request({user:{...vendor,email:'other@example.com',roles:['SUPER_ADMIN']}})));
+ assert.equal(await run(request({user:{...vendor,email:'admin@example.com',roles:['SUPER_ADMIN']}})),true);
+ console.log('Feature backend guard: 13 ownership, role and administrator checks passed.');
+})().catch(error=>{console.error(error.message);process.exitCode=1});
